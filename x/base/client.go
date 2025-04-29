@@ -146,7 +146,7 @@ func (c *BaseClient) SendTx(msg sdk.Msg, getResponse bool) (*tx.GetTxResponse, e
 	}
 
 	if getResponse {
-		err := c.WaitNBlocks(2, 3*time.Second)
+		err := c.WaitNBlocks(2, 8*time.Second)
 		if err != nil {
 			return nil, err
 		}

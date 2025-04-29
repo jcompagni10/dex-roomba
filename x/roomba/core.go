@@ -43,6 +43,9 @@ func SuckUpDust(baseClient *base.BaseClient, grpcConn *grpc.ClientConn) {
 
 	for {
 		for _, denom := range dustDenoms {
+
+			baseClient.WaitNBlocks(1, time.Second*5)
+
 			price, err := oracleClient.GetPrice(denom.Symbol)
 			if err != nil {
 				log.Errorf("Failed to get price: %v", err)
@@ -58,8 +61,10 @@ func SuckUpDust(baseClient *base.BaseClient, grpcConn *grpc.ClientConn) {
 				log.Errorf("Failed to place limit order: %v", err)
 
 			} else {
-				log.Infof("Buy Denom with USDC: %v", resp.TxResponse.TxHash)
+				log.Infof("Buy Denom %v with USDC: %v", denom.Symbol, resp.TxResponse.TxHash)
 			}
+
+			baseClient.WaitNBlocks(1, time.Second*5)
 
 			// Sell Denom for USDC
 			priceWithSpread = exponentAdjustedPrice.Mul(math_utils.OnePrecDec().Sub(DefaultSpread))
