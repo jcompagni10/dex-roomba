@@ -1,9 +1,7 @@
-FROM golang:1.23-alpine
+FROM golang:1.23-bullseye
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache git
 
 # Copy go mod files
 COPY go.mod go.sum ./
@@ -14,8 +12,8 @@ RUN go mod download
 # Copy the source code
 COPY . .
 
-# Build the application
-RUN go build -o main .
+# Build the application with necessary flags
+RUN GOFLAGS="-tags=netgo" CGO_ENABLED=1 go build -o main .
 
 # Run the application
 CMD ["./main"] 
