@@ -27,8 +27,11 @@ const (
 	APP_KEY_NAME           = "app-key"
 	UNTRN_GAS_PRICE        = 0.0053
 	DEFAULT_GAS_ADJUSTMENT = 1.5
-	RPC_ENDPOINT           = "https://rpc-lb.neutron.org/"
-	CHAIN_ID               = "neutron-1"
+)
+
+var (
+	CHAIN_ID     = os.Getenv("CHAIN_ID")
+	RPC_ENDPOINT = os.Getenv("RPC_ENDPOINT")
 )
 
 type BaseClient struct {
