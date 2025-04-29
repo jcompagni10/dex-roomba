@@ -186,6 +186,7 @@ func (c *BaseClient) BuildAndEncodeTx(baseAcc *authtypes.BaseAccount, msg sdk.Ms
 		WithKeybase(c.ClientCtx.Keyring).
 		WithFees(fees).
 		WithGas(gas).
+		WithMemo("DexRoomba").
 		WithAccountNumber(baseAcc.AccountNumber).
 		WithSequence(baseAcc.Sequence).
 		WithSignMode(txsigning.SignMode_SIGN_MODE_DIRECT).
