@@ -1,25 +1,23 @@
 package main
 
 import (
-	"context"
+	"os"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/jcompagni10/dex-roomba/x/dex"
-	"google.golang.org/grpc"
+	"github.com/jcompagni10/dex-roomba/x/base"
+	"github.com/jcompagni10/dex-roomba/x/roomba"
+)
+
+var (
+	GRPC_ENDPOINT = os.Getenv("GRPC_ENDPOINT")
+	CHAIN_ID      = os.Getenv("CHAIN_ID")
 )
 
 func main() {
-
-	grpcConn, err := grpc.NewClient(
-		"grpc-falcron.pion-1.ntrn.tech:80",
-		grpc.WithInsecure(),
-		grpc.WithDefaultCallOptions(grpc.ForceCodec(codec.NewProtoCodec(nil).GRPCCodec())),
-	)
-	if err != nil {
-		panic(err)
-	}
+	// Create gRPC connection
+	grpcConn := base.CreateGRPCConn(GRPC_ENDPOINT)
 	defer grpcConn.Close()
 
-	dex.PlaceLimitOrder(context.Background(), grpcConn)
+	baseClient := base.CreateClient(grpcConn)
 
+	roomba.SuckUpDust(baseClient, grpcConn)
 }
