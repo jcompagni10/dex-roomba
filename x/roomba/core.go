@@ -1,12 +1,12 @@
 package roomba
 
 import (
+	"fmt"
 	"math"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/jcompagni10/dex-roomba/x/base"
 	"github.com/jcompagni10/dex-roomba/x/dex"
 	"github.com/jcompagni10/dex-roomba/x/oracle"
@@ -28,6 +28,10 @@ var (
 		{Symbol: "NTRN", IBCDenom: "untrn", Exponent: 6},
 		{Symbol: "ATOM", IBCDenom: "ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9", Exponent: 6},
 		{Symbol: "TIA", IBCDenom: "ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7", Exponent: 6},
+		{Symbol: "BTC", IBCDenom: "ibc/DF8722298D192AAB85D86D0462E8166234A6A9A572DD4A2EA7996029DF4DB363", Exponent: 8},
+		{Symbol: "DYDX", IBCDenom: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CE49843A4618FDED7ECB662409", Exponent: 18},
+		{Symbol: "OSMO", IBCDenom: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CE49843A4618FDED7ECB662409", Exponent: 6},
+		{Symbol: "ETH", IBCDenom: "ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D", Exponent: 18},
 	}
 )
 
@@ -51,28 +55,33 @@ func SuckUpDust(baseClient *base.BaseClient, grpcConn *grpc.ClientConn) {
 				log.Errorf("Failed to get price: %v", err)
 				continue
 			}
-			exponentDiff := USDC.Exponent - denom.Exponent
-			exponentAdjustedPrice := price.MulInt64(int64(math.Pow(float64(10), float64(exponentDiff))))
+			exponentDiff := math.Pow(10, float64(USDC.Exponent-denom.Exponent))
+			exponentAdjustedPrice := price.Mul(math_utils.MustNewPrecDecFromStr(fmt.Sprintf("%.27f", exponentDiff)))
 
 			// Buy Denom with USDC
 			priceWithSpread := math_utils.OnePrecDec().Quo(exponentAdjustedPrice.Mul(math_utils.OnePrecDec().Add(DefaultSpread)))
-			resp, err := dexClient.PlaceLimitOrder(USDC.IBCDenom, denom.IBCDenom, sdkmath.NewInt(10), priceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
+			AmountIn := math_utils.OnePrecDec().Quo(priceWithSpread).Ceil().TruncateInt().MulRaw(2)
+
+			log.Infof("Sell USDC => %v:  SellPrice: %v; AmountIn: %v", denom.Symbol, priceWithSpread, AmountIn)
+			resp, err := dexClient.PlaceLimitOrder(USDC.IBCDenom, denom.IBCDenom, AmountIn, priceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
 			if err != nil {
 				log.Errorf("Failed to place limit order: %v", err)
 
 			} else {
-				log.Infof("Buy Denom %v with USDC: %v", denom.Symbol, resp.TxResponse.TxHash)
+				log.Infof("USDC => %v success: %v", denom.Symbol, resp.TxResponse.TxHash)
 			}
 
 			baseClient.WaitNBlocks(1, time.Second*5)
 
 			// Sell Denom for USDC
 			priceWithSpread = exponentAdjustedPrice.Mul(math_utils.OnePrecDec().Sub(DefaultSpread))
-			resp, err = dexClient.PlaceLimitOrder(denom.IBCDenom, USDC.IBCDenom, sdkmath.NewInt(10), priceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
+			AmountIn = math_utils.OnePrecDec().Quo(priceWithSpread).Ceil().TruncateInt().MulRaw(2)
+			log.Infof("Sell %v => USDC:  SellPrice: %v; AmountIn: %v", denom.Symbol, priceWithSpread, AmountIn)
+			resp, err = dexClient.PlaceLimitOrder(denom.IBCDenom, USDC.IBCDenom, AmountIn, priceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
 			if err != nil {
 				log.Errorf("Failed to place limit order: %v", err)
 			} else {
-				log.Infof("Sell %v for USDC: %v", denom.Symbol, resp.TxResponse.TxHash)
+				log.Infof("%v => USDC success: %v", denom.Symbol, resp.TxResponse.TxHash)
 			}
 		}
 		time.Sleep(SLEEP_TIMEOUT)

@@ -144,6 +144,9 @@ func (c *BaseClient) SendTx(msg sdk.Msg, getResponse bool) (*tx.GetTxResponse, e
 	if err != nil {
 		return nil, err
 	}
+	if res.TxResponse.Code != 0 {
+		return nil, fmt.Errorf("tx failed with code %d: %v", res.TxResponse.Code, res.TxResponse.RawLog)
+	}
 
 	if getResponse {
 		err := c.WaitNBlocks(2, 8*time.Second)
@@ -151,11 +154,15 @@ func (c *BaseClient) SendTx(msg sdk.Msg, getResponse bool) (*tx.GetTxResponse, e
 			return nil, err
 		}
 		txResp, err := c.QueryTx(res.TxResponse.TxHash)
+
 		if err != nil {
 			return nil, err
 		}
 		if txResp.TxResponse.Code != 0 {
 			return nil, fmt.Errorf("tx failed with code %d: %v", txResp.TxResponse.Code, txResp.TxResponse.RawLog)
+		}
+		if txResp.TxResponse.RawLog != "" {
+			return nil, fmt.Errorf("tx failed: %v", txResp.TxResponse.RawLog)
 		}
 		return txResp, nil
 	} else {
