@@ -22,7 +22,7 @@ type Denom struct {
 }
 
 var (
-	DefaultSpread = math_utils.MustNewPrecDecFromStr("0.005")
+	DefaultSpread = math_utils.MustNewPrecDecFromStr("0.01")
 	USDC          = Denom{Symbol: "USDC", IBCDenom: "ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9B494105E4F81", Exponent: 6}
 	dustDenoms    = []Denom{
 		{Symbol: "NTRN", IBCDenom: "untrn", Exponent: 6},
