@@ -3,6 +3,7 @@ package roomba
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -56,34 +57,36 @@ func SuckUpDust(baseClient *base.BaseClient, grpcConn *grpc.ClientConn) {
 				continue
 			}
 			exponentDiff := math.Pow(10, float64(USDC.Exponent-denom.Exponent))
-			exponentAdjustedPrice := price.Mul(math_utils.MustNewPrecDecFromStr(fmt.Sprintf("%.27f", exponentDiff)))
+			exponentAdjustedSellPrice := price.Mul(math_utils.MustNewPrecDecFromStr(fmt.Sprintf("%.27f", exponentDiff)))
 
-			// Buy Denom with USDC
-			priceWithSpread := math_utils.OnePrecDec().Quo(exponentAdjustedPrice.Mul(math_utils.OnePrecDec().Add(DefaultSpread)))
-			AmountIn := math_utils.OnePrecDec().Quo(priceWithSpread).Ceil().TruncateInt().MulRaw(2)
+			if rand.Intn(2) == 0 { // Randomly do buy or sell order
+				// Buy Denom with USDC
+				buyPriceWithSpread := math_utils.OnePrecDec().Quo(exponentAdjustedSellPrice.Mul(math_utils.OnePrecDec().Add(DefaultSpread)))
+				AmountIn := math_utils.OnePrecDec().Quo(buyPriceWithSpread).Ceil().TruncateInt().MulRaw(2)
 
-			log.Infof("Sell USDC => %v:  SellPrice: %v; AmountIn: %v", denom.Symbol, priceWithSpread, AmountIn)
-			resp, err := dexClient.PlaceLimitOrder(USDC.IBCDenom, denom.IBCDenom, AmountIn, priceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
-			if err != nil {
-				log.Errorf("Failed to place limit order: %v", err)
+				log.Infof("Buy USDC => %v:  BuyPrice: %v; AmountIn: %v", denom.Symbol, buyPriceWithSpread, AmountIn)
+				resp, err := dexClient.PlaceLimitOrder(USDC.IBCDenom, denom.IBCDenom, AmountIn, buyPriceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
+				if err != nil {
+					log.Errorf("Failed to place limit order: %v", err)
 
+				} else {
+					log.Infof("USDC => %v success: %v", denom.Symbol, resp.TxResponse.TxHash)
+				}
 			} else {
-				log.Infof("USDC => %v success: %v", denom.Symbol, resp.TxResponse.TxHash)
+				// Sell Denom for USDC
+				sellPriceWithSpread := exponentAdjustedSellPrice.Mul(math_utils.OnePrecDec().Sub(DefaultSpread))
+				AmountIn := math_utils.OnePrecDec().Quo(sellPriceWithSpread).Ceil().TruncateInt().MulRaw(2)
+				log.Infof("Sell %v => USDC:  SellPrice: %v; AmountIn: %v", denom.Symbol, sellPriceWithSpread, AmountIn)
+				resp, err := dexClient.PlaceLimitOrder(denom.IBCDenom, USDC.IBCDenom, AmountIn, sellPriceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
+				if err != nil {
+					log.Errorf("Failed to place limit order: %v", err)
+				} else {
+					log.Infof("%v => USDC success: %v", denom.Symbol, resp.TxResponse.TxHash)
+				}
 			}
 
-			baseClient.WaitNBlocks(1, time.Second*5)
-
-			// Sell Denom for USDC
-			priceWithSpread = exponentAdjustedPrice.Mul(math_utils.OnePrecDec().Sub(DefaultSpread))
-			AmountIn = math_utils.OnePrecDec().Quo(priceWithSpread).Ceil().TruncateInt().MulRaw(2)
-			log.Infof("Sell %v => USDC:  SellPrice: %v; AmountIn: %v", denom.Symbol, priceWithSpread, AmountIn)
-			resp, err = dexClient.PlaceLimitOrder(denom.IBCDenom, USDC.IBCDenom, AmountIn, priceWithSpread, dextypes.LimitOrderType_IMMEDIATE_OR_CANCEL, MinAverageSellPrice)
-			if err != nil {
-				log.Errorf("Failed to place limit order: %v", err)
-			} else {
-				log.Infof("%v => USDC success: %v", denom.Symbol, resp.TxResponse.TxHash)
-			}
 		}
+
 		time.Sleep(SLEEP_TIMEOUT)
 	}
 
