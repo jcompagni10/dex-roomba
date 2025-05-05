@@ -1,8 +1,11 @@
 package dex
 
 import (
+	"context"
+
 	sdkmath "cosmossdk.io/math"
 
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/jcompagni10/dex-roomba/x/base"
 	math_utils "github.com/neutron-org/neutron/v6/utils/math"
@@ -55,4 +58,22 @@ func (c *DexClient) PlaceLimitOrder(
 	}
 	return resp, nil
 
+}
+
+func (c *DexClient) GetSpotPrice(
+	tokenIn string,
+	tokenOut string,
+) (math_utils.PrecDec, error) {
+
+	resp, err := c.QueryClient.TickLiquidityAll(context.Background(), &dextypes.QueryAllTickLiquidityRequest{
+		PairId:  dextypes.MustNewPairID(tokenIn, tokenOut).String(),
+		TokenIn: tokenIn,
+		Pagination: &sdkquery.PageRequest{
+			Limit: 1,
+		},
+	})
+	if err != nil {
+		return math_utils.ZeroPrecDec(), err
+	}
+	return resp.TickLiquidity[0].Price(), nil
 }
