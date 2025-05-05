@@ -2,6 +2,7 @@ package dex
 
 import (
 	"context"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -66,14 +67,26 @@ func (c *DexClient) GetSpotPrice(
 ) (math_utils.PrecDec, error) {
 
 	resp, err := c.QueryClient.TickLiquidityAll(context.Background(), &dextypes.QueryAllTickLiquidityRequest{
-		PairId:  dextypes.MustNewPairID(tokenIn, tokenOut).String(),
+		PairId:  dextypes.MustNewPairID(tokenIn, tokenOut).CanonicalString(),
 		TokenIn: tokenIn,
 		Pagination: &sdkquery.PageRequest{
 			Limit: 1,
 		},
 	})
 	if err != nil {
+		fmt.Printf("res: %v, req: %v", resp, &dextypes.QueryAllTickLiquidityRequest{
+			PairId:  dextypes.MustNewPairID(tokenIn, tokenOut).CanonicalString(),
+			TokenIn: tokenIn,
+			Pagination: &sdkquery.PageRequest{
+				Limit: 1,
+			},
+		})
 		return math_utils.ZeroPrecDec(), err
 	}
+
+	if len(resp.TickLiquidity) == 0 {
+		return math_utils.ZeroPrecDec(), fmt.Errorf("no tick liquidity found")
+	}
+
 	return resp.TickLiquidity[0].Price(), nil
 }

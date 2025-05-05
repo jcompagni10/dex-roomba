@@ -65,14 +65,14 @@ func SuckUpDust(baseClient *base.BaseClient, grpcConn *grpc.ClientConn) {
 			if denom.PriceFeed {
 				price, err = oracleClient.GetPrice(denom.Symbol)
 				if err != nil {
-					log.Errorf("Failed to get price: %v", err)
+					log.Errorf("Failed to get price for %v: %v", denom.Symbol, err)
 					continue
 				}
 			} else {
 
 				rawPrice, err := dexClient.GetSpotPrice(denom.IBCDenom, USDC.IBCDenom)
 				if err != nil {
-					log.Errorf("Failed to get spot price: %v", err)
+					log.Errorf("Failed to get spot price for %v: %v", denom.Symbol, err)
 					continue
 				}
 				exponentDiff := math.Pow(10, float64(denom.Exponent-USDC.Exponent))
