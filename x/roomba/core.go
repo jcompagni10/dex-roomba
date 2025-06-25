@@ -42,6 +42,8 @@ var (
 		{Symbol: "BTC", IBCDenom: "ibc/78F7404035221CD1010518C7BC3DD99B90E59C2BA37ABFC3CE56B0CFB7E8901B", Exponent: 8, PriceFeed: true}, // osmosis wBTC
 		{Symbol: "EURe", IBCDenom: "ibc/273E4C3B307F3BD56F08652B1DA009A705F078811716DF53F7829A76ED769A8D", Exponent: 6, PriceFeed: false},
 		{Symbol: "MARS", IBCDenom: "factory/neutron1ndu2wvkrxtane8se2tr48gv7nsm46y5gcqjhux/MARS", Exponent: 6, PriceFeed: false},
+		{Symbol: "ETH", IBCDenom: "ibc/3F1D988D9EEA19EB0F3950B4C19664218031D8BCE68CE7DE30F187D5ACEA0463", Exponent: 8, PriceFeed: true}, // wETH.atom --Eureka
+
 	}
 )
 
