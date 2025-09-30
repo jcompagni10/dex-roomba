@@ -44,6 +44,8 @@ var (
 		{Symbol: "MARS", IBCDenom: "factory/neutron1ndu2wvkrxtane8se2tr48gv7nsm46y5gcqjhux/MARS", Exponent: 6, PriceFeed: false},
 		{Symbol: "ETH", IBCDenom: "ibc/3F1D988D9EEA19EB0F3950B4C19664218031D8BCE68CE7DE30F187D5ACEA0463", Exponent: 8, PriceFeed: true}, // wETH.atom --Eureka
 		{Symbol: "TAB", IBCDenom: "factory/neutron1r5qx58l3xx2y8gzjtkqjndjgx69mktmapl45vns0pa73z0zpn7fqgltnll/TAB", Exponent: 6, PriceFeed: false},
+		{Symbol: "BTC", IBCDenom: "ibc/0E293A7622DC9A6439DB60E6D234B5AF446962E27CA3AB44D0590603DFF6968E", Exponent: 8, PriceFeed: true}, // wBTC.cosmos
+		{Symbol: "MaxBTC", IBCDenom: "factory/neutron17sp75wng9vl2hu3sf4ky86d7smmk3wle9gkts2gmedn9x4ut3xcqa5xp34/maxbtc", Exponent: 8, PriceFeed: false},
 	}
 )
 
