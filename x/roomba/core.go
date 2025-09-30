@@ -62,7 +62,7 @@ func SuckUpDust(baseClient *base.BaseClient, grpcConn *grpc.ClientConn) {
 	for {
 		for _, denom := range dustDenoms {
 
-			baseClient.WaitNBlocks(1, time.Second*5)
+			baseClient.WaitNBlocks(3, time.Second*20)
 
 			var price math_utils.PrecDec
 			var err error
